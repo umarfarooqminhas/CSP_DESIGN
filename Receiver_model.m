@@ -1,5 +1,5 @@
 %% Code for computation of Thermal Effeciency of Receiver
-function [Q_ABS_TOT,Q_INCIDENT_TOT,ETA_THERMAL,M_HTF_TOT] = Receiver_model(FLUX_AVG,D_RECEIVER,HEIGHT_RECEIVER,TOWER_HEIGHT)
+function [Q_ABS_TOT,Q_INCIDENT_TOT,ETA_THERMAL,M_HTF_TOT] = Receiver_model(FLUX_AVG,D_RECEIVER,HEIGHT_RECEIVER,TOWER_HEIGHT,T_AMB)
 
 %% General Parameters
 
@@ -8,17 +8,17 @@ T_HTF_IN = 260;                                                             %Hea
 WIND_VELOCITY_AVG = 5.6;                                                    %Average Wind Velocity at Receiver Height in m/s -- Wind Atlas PRIMM NV
 P_AMB = 1;                                                                  %Ambient Pressure
 ETA_PUMP = 0.65;                                                            %Pump Effeciency
-T_AMB = 27;                                                                 %Ambient Temp in °C
+%T_AMB = 27;                                                                 %Ambient Temp in °C
 T_SKY= 0;                                                                   %Sky Temperature
-Q_HTF = 1000;                                                                %Coolent Mass Flowrate in kg/s
+%Q_HTF = 150;                                                                %Coolent Mass Flowrate in kg/s
 SIGMA = 5.678E-8;                                                           %Stefan-Boltzman Constant W/m^2-K^4
 EPSILON = 0.88;                                                             %Emissivity
 
 %% Receiver Dimensions
 
 N_PANELS = 16;                                                              %Number of Vertical Panel in Receiver in m
-%D_RECEIVER = 8.15;                                                          %Receiver overall Diameter in m
-%HEIGHT_RECEIVER = 6.2;                                                      %Paner Height in m
+%D_RECEIVER = 23;                                                          %Receiver overall Diameter in m
+%HEIGHT_RECEIVER = 27.6;                                                      %Paner Height in m
 %TOWER_HEIGHT = 120;                                                         %Tower Height from Ground in m
 D_OUT_TUBE = 25*10^-3;                                                      %TUBE OUTER DIAMETER in m
 THICKNESS_TUBE = 1.25*10^-3;                                                %Tube Thickness in m
@@ -61,13 +61,13 @@ T_HTF_HOT=1500;                                                             %HTF
 T_HTF_AVG_OUT=600;
 %% CALCULATIONS
 error=1;                                                                    %INITIALIZING ERROR VARIABLE
-while error > 10^-4                                                         %CHECK CONVERGENCE
+while error > 10^-2                                                         %CHECK CONVERGENCE
 for j=1:N_PANELS
     T_PANEL_AVE(j)=(T_PANEL_OUT(j)+T_PANEL_IN(j))/2;                              %PANEL AVG TEMP FOR T WALL & AVG NEW SURFACE TEMP
-    T_FILM(j)=(T_SURFACE_PANEL(j)+T_AMB)/2
+    T_FILM(j)=(T_SURFACE_PANEL(j)+T_AMB)/2;
 end
 
-T_HTF_REF=(T_HTF_AVG_OUT+T_HTF_IN)/2                                      %HTF AVERAGE PROPERTIES EVALUATION
+T_HTF_REF=(T_HTF_AVG_OUT+T_HTF_IN)/2;                                     %HTF AVERAGE PROPERTIES EVALUATION
 T_SURFACE_AVG = sum(T_SURFACE_PANEL)/length(T_SURFACE_PANEL);               %RECEIVER SURFACE AVG TEMP For Forced Convection calculation
 T_FILM_AVG = (T_AMB+T_HTF_OUT)/2;                                           %AVERGAE Film Temp for forced convection co-effient calculation
 
@@ -134,7 +134,7 @@ RE_INT_TUBE=RHO_HTF*U_HTF*D_IN_TUBE/MU_HTF;                                 %Ren
 F=(0.79*log(RE_INT_TUBE)-1.64)^-2;                                           %Friction Factor for Re (3000 - 5E6)
 PR_INT_TUBE=CP_HTF*MU_HTF/K_HTF;
 NU_INT=(F/8)*(RE_INT_TUBE-1000)*PR_INT_TUBE/(1+12.7*(F/8)^(0.5)*(PR_INT_TUBE^(2/3)-1));
-H_INN_HTF=NU_INT*K_HTF/D_IN_TUBE;
+H_INN_HTF=real(NU_INT*K_HTF/D_IN_TUBE);
 R_CONV_HTF=1/(H_INN_HTF*pi*D_IN_TUBE/2*HEIGHT_RECEIVER*N_TUBE_PAN);         %Convective Heat Transfer Resistance HTF
 %% FLOW GRID 
 
@@ -222,7 +222,6 @@ T_HTF_AVG_OUT = (T_PANEL_OUT(N_PANELS/2)+T_PANEL_OUT(N_PANELS/2+1))/2;
 M_HTF=Q_ABS_TOT/(N_FLOW_PATH*CP_HTF*(T_HTF_OUT-T_HTF_IN));
 
 M_HTF_TOT=M_HTF*N_FLOW_PATH;
-
 error= abs(T_HTF_AVG_OUT-T_HTF_OUT)/T_HTF_OUT;
 end
 
