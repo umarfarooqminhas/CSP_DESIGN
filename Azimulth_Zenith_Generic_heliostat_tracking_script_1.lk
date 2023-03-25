@@ -1,0 +1,61 @@
+H_Tower = 250; //Tower  height
+D_Receiver= 23; //Receiver diameter
+
+for (azimuth=0; azimuth<361; azimuth=azimuth+20) //select desired range
+	{
+	for(zenith=0; zenith<81; zenith=zenith+10) //select desired range
+		{
+		azimuth_rad=azimuth*pi()/180;
+		//azimuth_rad=116*pi()/180;
+		altitude=90-zenith;
+		//altitude=90-9.7;
+		altitude_rad=altitude*pi()/180;
+		
+		x =-cos(altitude_rad)*sin(azimuth_rad);
+		y = cos(altitude_rad)*cos(azimuth_rad);
+		z = sin(altitude_rad);
+		
+		sunopt({"x" = x, "y" = y, "z" = z});
+		sun = sunopt();
+		S = [sun{"x"}, sun{"y"}, sun{"z"}];
+		
+		modS=sqrt(S[0]^2 + S[1]^2 + S[2]^2);
+		S[0] = S[0]/modS;
+		S[1] = S[1]/modS;
+		S[2] = S[2]/modS;
+		
+
+	
+		
+		activestage("Heliostat field");
+		N_Heliostats=nelements();
+		for ( j=0; j<N_Heliostats; j++)
+			{
+			tab_heliostat = elementopt(j);
+			P=[tab_heliostat{"x"}, tab_heliostat{"y"}, tab_heliostat{"z"}];
+			R = [P[0]*D_Receiver/sqrt(P[0]^2+P[1]^2), P[1]*D_Receiver/sqrt(P[0]^2+P[1]^2), H_Tower];
+			R = [R[0] - P[0], R[1] - P[1], R[2] - P[2]];
+			modR=sqrt(R[0]^2+R[1]^2+R[2]^2);
+			R[0] = R[0]/modR;
+			R[1] = R[1]/modR;
+			R[2] = R[2]/modR;
+			normRS1=sqrt(2+2*dot(R,S));
+			N=[(R[0]+S[0])/normRS1,(R[1]+S[1])/normRS1,(R[2]+S[2])/normRS1];
+			elementopt(j,{"ax"=(N[0]+P[0]), "ay"=(N[1]+P[1]), "az"=(N[2]+P[2])});
+			}
+		
+		trace();
+
+		DNI = 950; // Average DNI
+		W = 13.4; // heliostat mirror dimensions
+		L = 13.4; // heliostat mirror dimensions
+		hits=rayhits(1,0,1);
+		Sun_Disc = sundata();
+		areaDisc=(Sun_Disc{"ymax"}-Sun_Disc{"ymin"})*(Sun_Disc{"xmax"}-Sun_Disc{"xmin"});
+		pow_per_Ray = areaDis*DNI/Sun_Disc{"nrays"};
+		Pow_target = hits*pow_per_Ray;
+		eta = Pow_target/DNI/L/W/N_Heliostats;
+		out(eta + ","); // in order to separate the efficiencies
+	}
+		out(";"); // in order to separate set of efficiencies
+}
